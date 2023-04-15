@@ -1,7 +1,21 @@
 services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+
   backend:
     build:
       context: .
       dockerfile: ./dockerfile
     ports:
       - 3000:3000
+
+volumes:
+  db:
+    driver: local
