@@ -16,9 +16,21 @@ app.use('/qa/questions/:question_id/answers', (req, res) => {
     req.query.count = 5;
   }
   client.connect();
-  client.query('SELECT * FROM answers WHERE question_id = $1', [question_id])
+  client.query(
+    "(SELECT *, ARRAY( \
+        SELECT url \
+        FROM answers_photos ap \
+        WHERE a.id = ap.answer_id) AS photos \
+      FROM answers a \
+      WHERE question_id = $1) \
+    ", [question_id])
     .then((result) => {
-      res.send(result.rows);
+      res.send({
+        'question': question_id,
+        'page': req.query.page,
+        'count': req.query.count,
+        'results': result.rows
+      });
     })
     .catch((err) => {
       console.log(err);
