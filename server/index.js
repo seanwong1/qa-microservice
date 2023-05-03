@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use('/qa/questions/:question_id/answers', (req, res) => {
+app.get('/qa/questions/:question_id/answers', (req, res) => {
   var question_id = req.params.question_id;
   if (!req.query.page) {
     req.query.page = 1;
@@ -41,7 +41,7 @@ app.use('/qa/questions/:question_id/answers', (req, res) => {
     });
 })
 
-app.use('/qa/questions', (req, res) => {
+app.get('/qa/questions', (req, res) => {
   if (!req.query.page) {
     req.query.page = 1;
   }
@@ -65,6 +65,22 @@ app.use('/qa/questions', (req, res) => {
       });
   }
 });
+
+app.put('/qa/questions/:question_id/helpful', (req, res) => {
+  var question_id = req.params.question_id;
+  client.connect();
+  client.query('UPDATE questions SET helpful = helpful + 1 WHERE id = $1', [question_id])
+    .then((result) => {
+      res.sendStatus(204);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(404);
+    })
+    .then(() => {
+      client.end();
+    });
+})
 
 app.listen(config.port, () => {
   console.log("Server listening on port", config.port);
