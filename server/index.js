@@ -82,6 +82,22 @@ app.put('/qa/questions/:question_id/helpful', (req, res) => {
     });
 })
 
+app.put('/qa/questions/:question_id/report', (req, res) => {
+  var question_id = req.params.question_id;
+  client.connect();
+  client.query('UPDATE questions SET reported = reported + 1 WHERE id = $1', [question_id])
+    .then((result) => {
+      res.sendStatus(204);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(404);
+    })
+    .then(() => {
+      client.end();
+    });
+})
+
 app.listen(config.port, () => {
   console.log("Server listening on port", config.port);
 });
