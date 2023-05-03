@@ -80,7 +80,7 @@ app.put('/qa/questions/:question_id/helpful', (req, res) => {
     .then(() => {
       client.end();
     });
-})
+});
 
 app.put('/qa/questions/:question_id/report', (req, res) => {
   var question_id = req.params.question_id;
@@ -96,7 +96,39 @@ app.put('/qa/questions/:question_id/report', (req, res) => {
     .then(() => {
       client.end();
     });
-})
+});
+
+app.put('/qa/answers/:answer_id/helpful', (req, res) => {
+  var answer_id = req.params.answer_id;
+  client.connect();
+  client.query('UPDATE answers SET helpful = helpful + 1 WHERE id = $1', [answer_id])
+    .then((result) => {
+      res.sendStatus(204);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(404);
+    })
+    .then(() => {
+      client.end();
+    });
+});
+
+app.put('/qa/answers/:answer_id/report', (req, res) => {
+  var answer_id = req.params.answer_id;
+  client.connect();
+  client.query('UPDATE answers SET reported = reported + 1 WHERE id = $1', [answer_id])
+    .then((result) => {
+      res.sendStatus(204);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(404);
+    })
+    .then(() => {
+      client.end();
+    });
+});
 
 app.listen(config.port, () => {
   console.log("Server listening on port", config.port);
