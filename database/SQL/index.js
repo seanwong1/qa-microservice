@@ -5,7 +5,8 @@ const client = new Client({
   host: 'localhost', // use db if connecting with docker
   database: 'sdc',
   password: 'mysecretpassword',
-  port: 5432
+  port: 5432,
+  allowExitOnIdle: true
 });
 
 module.exports = { client };
