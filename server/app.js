@@ -1,7 +1,7 @@
 const express = require("express");
 
 const client = require('../database/SQL').client;
-//client.connect();
+client.connect();
 
 const app = express();
 

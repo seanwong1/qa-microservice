@@ -6,7 +6,7 @@ const client = new Client({
   database: 'sdc',
   password: 'mysecretpassword',
   port: 5432,
-  allowExitOnIdle: true
+  // allowExitOnIdle: true
 });
 
 module.exports = { client };
