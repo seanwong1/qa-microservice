@@ -1,4 +1,5 @@
 const express = require("express");
+const redis = require("redis");
 const path = require("path");
 
 const client = require('../database/SQL').client;
@@ -6,11 +7,30 @@ client.connect();
 
 const app = express();
 
+let redisClient;
+
+(async () => {
+  redisClient = redis.createClient({
+    socket: {
+        host: 'localhost',
+        port: '6379'
+    },
+    password: 'eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81'
+});
+
+  redisClient.on("error", (error) => console.error(`Error : ${error}`));
+
+  await redisClient.connect();
+})();
+
 app.use(express.json());
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-app.get('/qa/questions', (req, res) => {
+app.get('/qa/questions', async (req, res) => {
+  let results;
+  let isCached = false;
+
   if (!req.query.page) {
     req.query.page = 1;
   }
@@ -20,48 +40,61 @@ app.get('/qa/questions', (req, res) => {
   if (!req.query.product_id) {
     res.end('Enter product id');
   } else {
-    client.query(" \
-      SELECT json_build_object( \
-        'product_id', $1::Integer, \
-        'results', (WITH q AS (SELECT * from questions WHERE product_id = $1::Integer OFFSET $2 LIMIT $3) \
-          SELECT json_agg(json_build_object( \
-            'question_id', q.id, \
-            'question_body', q.body, \
-            'question_date', q.date_written, \
-            'asker_name', q.asker_name, \
-            'question_helpfulness', q.helpful, \
-            'reported', q.reported, \
-            'answers', (SELECT json_object_agg( \
-              a.id, json_build_object( \
-                'id', a.id, \
-                'body', a.body, \
-                'date', a.date_written, \
-                'answerer_name', a.answerer_name, \
-                'helpfulness', a.helpful, \
-                'photos', (SELECT json_agg(json_build_object( \
-                  'id', ap.id, \
-                  'url', ap.url \
-                )) FROM answers_photos AS ap WHERE ap.answer_id = a.id) \
-              ) \
-            ) FROM answers AS a WHERE a.question_id = q.id) \
-          )) FROM q \
-        ) \
-      ) \
-    ", [req.query.product_id, req.query.page, req.query.count])
-      .then((result) => {
-        res.send(result.rows[0].json_build_object);
-      })
-      .catch((err) => {
-        console.log(err);
-        res.sendStatus(404);
+    try {
+      const cacheResults = await redisClient.get(req.query.product_id);
+      if (cacheResults) {
+        isCached = true;
+        results = JSON.parse(cacheResults);
+      } else {
+        results = await client.query(" \
+          SELECT json_build_object( \
+            'product_id', $1::Integer, \
+            'results', (WITH q AS (SELECT * from questions WHERE product_id = $1::Integer OFFSET $2 LIMIT $3) \
+              SELECT json_agg(json_build_object( \
+                'question_id', q.id, \
+                'question_body', q.body, \
+                'question_date', q.date_written, \
+                'asker_name', q.asker_name, \
+                'question_helpfulness', q.helpful, \
+                'reported', q.reported, \
+                'answers', (SELECT json_object_agg( \
+                  a.id, json_build_object( \
+                    'id', a.id, \
+                    'body', a.body, \
+                    'date', a.date_written, \
+                    'answerer_name', a.answerer_name, \
+                    'helpfulness', a.helpful, \
+                    'photos', (SELECT json_agg(json_build_object( \
+                      'id', ap.id, \
+                      'url', ap.url \
+                    )) FROM answers_photos AS ap WHERE ap.answer_id = a.id) \
+                  ) \
+                ) FROM answers AS a WHERE a.question_id = q.id) \
+              )) FROM q \
+            ) \
+          ) \
+          ", [req.query.product_id, req.query.page, req.query.count]);
+        results = results.rows[0].json_build_object;
+        await redisClient.set(req.query.product_id, JSON.stringify(results));
+      }
+      res.send({
+        fromCache: isCached,
+        data: results
       });
+    } catch (err) {
+      console.log(err);
+      res.sendStatus(404);
+    }
       // .then(() => {
       //   client.end();
       // });
   }
 });
 
-app.get('/qa/questions/:question_id/answers', (req, res) => {
+app.get('/qa/questions/:question_id/answers', async (req, res) => {
+  let results;
+  let isCached = false;
+
   var question_id = req.params.question_id;
   if (!req.query.page) {
     req.query.page = 1;
@@ -70,26 +103,35 @@ app.get('/qa/questions/:question_id/answers', (req, res) => {
     req.query.count = 5;
   }
   // client.connect();
-  client.query(
-    "(SELECT *, ARRAY( \
-        SELECT url \
-        FROM answers_photos ap \
-        WHERE a.id = ap.answer_id) AS photos \
-      FROM answers a \
-      WHERE question_id = $1) \
-    ", [question_id])
-    .then((result) => {
-      res.send({
+  try {
+    const cacheResults = await redisClient.get(question_id);
+    if (cacheResults) {
+      isCached = true;
+      results = JSON.parse(cacheResults);
+    } else {
+      results = await client.query(
+        "(SELECT *, ARRAY( \
+            SELECT url \
+            FROM answers_photos ap \
+            WHERE a.id = ap.answer_id) AS photos \
+          FROM answers a \
+          WHERE question_id = $1) \
+        ", [question_id]);
+      await redisClient.set(question_id, JSON.stringify(results));
+    }
+    res.send({
+      fromCache: isCached,
+      data: {
         'question': question_id,
         'page': req.query.page,
         'count': req.query.count,
-        'results': result.rows
-      });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.sendStatus(404);
+        'results': results.rows
+      }
     });
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(404);
+  }
     // .then(() => {
     //   client.end();
     // });
