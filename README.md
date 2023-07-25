@@ -94,11 +94,11 @@ docker-compose up -d
 
 Contributions to improve the API are welcome. To contribute, follow these steps:
 
-Fork the repository.
-Create a new branch for your feature or bug fix.
-Make changes and commit them.
-Push your branch to your forked repository.
-Submit a pull request to the main repository.
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make changes and commit them.
+4. Push your branch to your forked repository.
+5. Submit a pull request to the main repository.
 
 ## License
 
