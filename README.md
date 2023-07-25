@@ -70,14 +70,14 @@ docker-compose up -d
 
 ## API Endpoints
 
-GET /qa/questions: Get all questions for a specific product.
-GET /qa/questions/:question_id/answers: Get all answers for a specific question.
-POST /qa/questions: Post a new question for a specific product.
-POST /qa/questions/:question_id/answers: Post a new answer for a specific question.
-PUT /qa/questions/:question_id/helpful: Mark a question helpful.
-PUT /qa/questions/:question_id/report: Report a question.
-PUT /qa/questions/:answer_id/helpful: Mark an answer helpful.
-PUT /qa/questions/:answer_id/report: Report an answer.
+* GET /qa/questions: Get all questions for a specific product.
+* GET /qa/questions/:question_id/answers: Get all answers for a specific question.
+* POST /qa/questions: Post a new question for a specific product.
+* POST /qa/questions/:question_id/answers: Post a new answer for a specific question.
+* PUT /qa/questions/:question_id/helpful: Mark a question helpful.
+* PUT /qa/questions/:question_id/report: Report a question.
+* PUT /qa/questions/:answer_id/helpful: Mark an answer helpful.
+* PUT /qa/questions/:answer_id/report: Report an answer.
 
 ## Technologies
 
