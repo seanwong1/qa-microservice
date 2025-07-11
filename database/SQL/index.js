@@ -1,4 +1,5 @@
 const { Pool, Client } = require('pg');
+const config = require('../../config.js');
 
 const client = new Client({
   user: config.dbUser,
