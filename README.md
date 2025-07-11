@@ -32,16 +32,16 @@ cd questions-answers-api
 ```npm install```
 
 ### Environment Configuration:
-Create a .env file in the root directory and set the following environment variables:
+Create a `.env` file in the root directory and set the following environment variables:
 ```
 PORT=3000
-DB_USERNAME=your_db_username
+DB_USER=your_db_username
 DB_PASSWORD=your_db_password
 DB_HOST=your_db_host
-DB_PORT=your_db_port
 DB_NAME=your_db_name
 REDIS_HOST=your_redis_host
 REDIS_PORT=your_redis_port
+REDIS_PASSWORD=your_redis_password
 ```
 
 ### Database Setup

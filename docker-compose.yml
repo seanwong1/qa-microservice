@@ -3,11 +3,11 @@ services:
     image: postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: sdc
-      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - 5432:5432
+      - ${DB_PORT}:5432
     volumes:
       - db:/var/lib/postgresql/data
       # - ./create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
@@ -16,9 +16,8 @@ services:
   cache:
     image: redis:7.0.11-alpine
     restart: always
-    ports:
-      - 6379:6379
-    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+      - ${REDIS_PORT}:6379
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
     volumes:
       - cache:/data
 
@@ -27,16 +26,17 @@ services:
       context: .
       dockerfile: ./dockerfile
     environment:
-      - EXTERNAL_PORT=3000
-      - PGUSER=postgres
-      - PGPASSWORD=mysecretpassword
-      - PGDATABASE=sdc
-      - PGHOST=db
-      - REDIS_HOST=cache
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+      - PORT=${PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
-      - 80:3000
+      - 80:${PORT}
 
 volumes:
   db:

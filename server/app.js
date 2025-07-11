@@ -2,6 +2,7 @@ const express = require("express");
 const redis = require("redis");
 const path = require("path");
 
+const config = require('../config.js');
 const client = require('../database/SQL').client;
 client.connect();
 
@@ -12,10 +13,10 @@ let redisClient;
 (async () => {
   redisClient = redis.createClient({
     socket: {
-        host: 'localhost',
-        port: '6379'
+        host: config.redisHost,
+        port: config.redisPort,
     },
-    password: 'eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81'
+    password: config.redisPassword,
 });
 
   redisClient.on("error", (error) => console.error(`Error : ${error}`));
