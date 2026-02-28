@@ -23,7 +23,7 @@ Install and configure the following software before running the service:
 
 ### Clone the repository
 ```bash
-git clone https://github.com/your-username/questions-answers-api.git
+git clone https://github.com/seanwong1/questions-answers-api.git
 cd questions-answers-api
 ```
 
@@ -79,6 +79,12 @@ docker-compose up -d
 - `PUT /qa/questions/:answer_id/helpful` &ndash; mark an answer helpful
 - `PUT /qa/questions/:answer_id/report` &ndash; report an answer
 
+## Load Test (k6)
+
+```bash
+k6 run k6_stresstest.js
+```
+
 ## Technologies Used
 
 ### Runtime & Language
@@ -100,6 +106,10 @@ docker-compose up -d
 
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)
+
+## Notes
+- This repo is a microservice; it expects a Postgres dataset and Redis configured via .env.
+- If the upstream dataset/schema differs, you’ll need to update the DB init/migration step.
 
 ## Contributing
 1. Fork this repository.
