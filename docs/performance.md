@@ -1,6 +1,6 @@
 # Performance Notes
 
-This service was developed as a systems design project for a Questions and Answers API. The engineering journal in `artifacts/engineering-journal.md` records the performance work: baseline route testing, PostgreSQL indexing, Redis caching, Docker deployment, and Loader.io experiments across several deployment layouts.
+This service was developed as a systems design project for a Questions and Answers API. The captured artifacts record the performance work: baseline route testing, PostgreSQL indexing, Redis caching, Docker deployment, and Loader.io experiments across several deployment layouts.
 
 ## Baseline Query Latency
 
@@ -14,7 +14,7 @@ The first major optimization was adding database indexes for the hot query path.
 
 ![Postman GET questions after index, fast response](./assets/postman-get-questions-after-index-fast.png)
 
-The journal also records k6 stress testing before and after indexing. At the highest local stress level, the service reached timeout/failure conditions around `10000` virtual users.
+The artifacts also record k6 stress testing before and after indexing. At the highest local stress level, the service reached timeout/failure conditions around `10000` virtual users.
 
 ![k6 before index at 10000 virtual users](./assets/k6-before-index-10000-vus.png)
 
@@ -24,7 +24,7 @@ After indexing, the k6 run recorded a high success rate under the same endpoint 
 
 ## Redis Caching
 
-Redis was added through Docker Compose and then integrated into the Express server as a cache for repeated query results. The journal notes that local tests appeared slightly faster with caching, but the bigger value became visible in repeated Loader.io tests.
+Redis was added through Docker Compose and then integrated into the Express server as a cache for repeated query results. Local tests appeared slightly faster with caching, but the bigger value became visible in repeated Loader.io tests.
 
 In the strongest captured cached Loader.io result, the service handled `10000 clients over 1 min` with `10000` successful responses, `0` timeouts, and an average response time of about `62 ms`.
 
@@ -32,7 +32,7 @@ In the strongest captured cached Loader.io result, the service handled `10000 cl
 
 ## Deployment Layout Experiments
 
-The journal documents several EC2 deployment experiments:
+The artifacts document several EC2 deployment experiments:
 
 - Single server running API, cache, and database.
 - Split deployment with cache/database on one server and backend on another.
@@ -43,7 +43,7 @@ The no-cache split deployment performed substantially worse, with a captured ave
 
 ![Loader split no-cache test 1 results](./assets/loader-split-no-cache-test-1-results.png)
 
-Moving the cache into the backend server improved results, supporting the journal's conclusion that network hops between backend and cache/database affected latency.
+Moving the cache into the backend server improved results, supporting the conclusion that network hops between backend and cache/database affected latency.
 
 ![Loader cache with backend results](./assets/loader-cache-with-backend-results.png)
 

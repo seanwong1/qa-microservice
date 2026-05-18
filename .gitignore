@@ -5,3 +5,4 @@ node_modules
 .env
 data_set
 create_tables.sql
+private-notes/

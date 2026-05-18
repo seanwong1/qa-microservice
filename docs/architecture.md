@@ -26,7 +26,7 @@ Client
 
 ## Deployment Evolution
 
-The engineering journal records several deployment experiments:
+The artifacts record several deployment experiments:
 
 - Local Docker Compose setup with backend, PostgreSQL, and Redis.
 - EC2 deployment with database imported from a PostgreSQL dump.

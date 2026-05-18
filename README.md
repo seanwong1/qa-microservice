@@ -21,7 +21,7 @@ See [Architecture Notes](./docs/architecture.md) for more details about the data
 
 ## Performance Summary
 
-The engineering journal and captured test artifacts show several rounds of optimization:
+Captured test artifacts show several rounds of optimization:
 
 - PostgreSQL indexing reduced a captured `/qa/questions` Postman response from about `1888 ms` to about `211 ms`.
 - Redis caching improved repeated-request performance in hosted Loader.io tests.
