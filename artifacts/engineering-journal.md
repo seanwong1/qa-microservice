@@ -2,6 +2,95 @@
 
 **Small group activity:** Performance Testing
 
+## Review Notes
+
+Use this section as a quick interview-prep guide. The dated journal below preserves the original project timeline; these notes summarize the most important technical decisions, milestones, tradeoffs, and lessons from the journal plus git history.
+
+### Project Summary
+
+- Built a Questions and Answers microservice for an ecommerce product page.
+- Designed relational and NoSQL schemas, then implemented the service with PostgreSQL because the Q&A data had clear relationships between products, questions, answers, and answer photos.
+- Implemented an Express API for question retrieval, answer retrieval, posting questions/answers, marking content helpful, and reporting content.
+- Used PostgreSQL JSON aggregation to shape nested API responses close to the database instead of assembling large nested objects in JavaScript.
+- Added Redis as a cache layer for repeated read requests.
+- Containerized the service with Docker and Docker Compose, then deployed and tested different EC2 layouts.
+- Used Postman, k6, and Loader.io to validate correctness and performance.
+
+### Git History Milestones
+
+- `3267357` on 2023-04-13: initialized the Node/Express project, package files, config file, placeholder database folders, and starter tests.
+- `9aceeb4` on 2023-04-14: added Dockerfile and Docker Compose basics so the backend could run in a container.
+- `42aeda3` on 2023-04-15: added PostgreSQL to Docker Compose, establishing the primary database service.
+- `4820471` on 2023-04-18: completed initial PostgreSQL and MongoDB schema work, documenting both relational and NoSQL data-model options.
+- `68ada26` on 2023-04-18: connected the backend container to the PostgreSQL container through Docker networking.
+- `e6878dd` on 2023-04-18: installed `pg`, enabling the Express server to query PostgreSQL.
+- `e0fbb99` on 2023-04-18: verified PostgreSQL returned data from the loaded dataset.
+- `9666431` on 2023-04-20: added first working GET routes for `/qa/questions` and `/qa/questions/:question_id/answers`.
+- `09dabe1` on 2023-04-22: improved the answers query to include photo URLs and return a response object with `question`, `page`, `count`, and `results`.
+- `97759f8`, `f62dc41`, and `6efcc3b` on 2023-05-02: implemented helpful/report routes for questions and answers.
+- `ca6886f` on 2023-05-04: completed the main `/qa/questions` route using `json_build_object`, `json_agg`, subqueries, and nested answer/photo aggregation.
+- `af4f091` on 2023-05-08: split server startup from the Express app, making the app easier to import for testing.
+- `858de4b` on 2023-05-08: added Supertest route tests for GET and POST behavior.
+- `532d864` on 2023-05-12: added the k6 local stress test script and began formal load testing.
+- `02d25e7` and `f30bec9` on 2023-05-16 to 2023-05-21: adjusted deployment settings and served a static file for Loader.io verification.
+- `c50f2bd` on 2023-05-26: added Redis, a Docker Compose cache service, and cache-aware GET routes returning `fromCache` metadata.
+- `24f4caf` on 2023-07-24: expanded the README with setup, endpoints, technologies, and deployment notes.
+- `f3fdd17` on 2025-07-11: moved hard-coded database and Redis credentials into environment-based config.
+- `b9c0a0e` on 2025-07-11: refactored the monolithic server into controllers and modular routers.
+- `220a27a` on 2026-05-18: added the artifact set and converted the engineering journal into Markdown.
+- `5efc78b` on 2026-05-18: promoted high-signal artifacts into architecture and performance docs.
+
+### Interview Talking Points
+
+- PostgreSQL vs MongoDB: The data had natural joins and hierarchical responses, but relational integrity across products, questions, answers, and photos made PostgreSQL a strong fit. MongoDB was explored during schema design, but the final service used PostgreSQL.
+- SQL-side response shaping: The `/qa/questions` endpoint used `json_build_object`, `json_agg`, `json_object_agg`, and subqueries to return nested API-ready data. This reduced JavaScript-side object assembly and kept heavy data shaping close to the database.
+- Indexing impact: Initial GET requests were slow on the full dataset. After adding indexes on hot query paths, captured Postman latency for `/qa/questions` improved from about `1888 ms` to about `211 ms`.
+- Cache-aside Redis strategy: The API checks Redis before querying PostgreSQL. On a cache miss, it queries Postgres and stores the result. This improved repeated-read performance in Loader.io tests.
+- Load testing approach: k6 was useful for local stress testing and finding saturation behavior, while Loader.io gave hosted evidence for deployed EC2 configurations.
+- Deployment tradeoff: Splitting services across EC2 instances was not automatically faster. Cache placement mattered; colocating Redis with the backend performed better than putting cache with the database and forcing backend-cache traffic across instances.
+- Operational learning: Database migration to EC2 was handled with `pg_dump`, `scp`, and `psql` inside the Postgres container. This worked, but a reproducible migration/init workflow would be better for future maintainability.
+- Refactor story: The app started as a single `server/index.js`, then moved to `server/app.js`, route modules, and controllers. This made the project easier to test and reason about.
+
+### STAR-Style Stories
+
+#### Optimizing Slow PostgreSQL Reads
+
+- Situation: The initial `/qa/questions` route worked but was too slow against the production-sized dataset.
+- Task: Improve read latency without changing the API contract.
+- Action: Used `EXPLAIN ANALYZE`, identified hot query paths, added PostgreSQL indexes, and retested with Postman and k6.
+- Result: Captured Postman latency improved from about `1888 ms` before indexing to about `211 ms` after indexing.
+
+#### Building Nested API Responses
+
+- Situation: The frontend expected questions with nested answers and answer photos.
+- Task: Return the full shape efficiently from a normalized relational schema.
+- Action: Built a PostgreSQL query using CTEs/subqueries and JSON aggregation functions instead of assembling the entire object in JavaScript.
+- Result: The route returned frontend-compatible nested data while keeping the most expensive transformation inside PostgreSQL.
+
+#### Adding Redis Caching
+
+- Situation: Indexed queries were faster, but repeated reads still hit PostgreSQL.
+- Task: Reduce repeated database work and improve response time under load.
+- Action: Added Redis to Docker Compose, connected an async Redis client in Express, checked the cache before querying Postgres, and stored query results on cache misses.
+- Result: Loader.io tests showed cached runs with low average response times, including a captured `10000 clients over 1 min` run at about `62 ms` average response time.
+
+#### Deployment And Load Testing On EC2
+
+- Situation: Local tests did not fully represent hosted behavior.
+- Task: Deploy the service and compare load-test performance across architectures.
+- Action: Migrated the database dump to EC2, verified endpoints through Postman, configured Loader.io, then tested single-server, split-server, cache colocated with backend, and no-cache layouts.
+- Result: Learned that splitting infrastructure can introduce network latency and that cache/backend colocation performed better than separating backend from cache.
+
+### Lessons Learned And Follow-Ups
+
+- Use database-managed IDs with sequences/identity columns and `RETURNING id` instead of `SELECT MAX(id) + 1`, which is unsafe under concurrent writes.
+- Include route, entity ID, page, and count in Redis cache keys to avoid collisions and incorrect paginated cache hits.
+- Invalidate or update cache entries after POST, helpful, and report mutations.
+- Convert the database setup from manual dump/import steps into a checked-in schema and reproducible migration flow.
+- Add stronger isolated tests for controllers/routes, pagination, cache behavior, and error handling.
+- Keep deployment credentials in environment variables and avoid hard-coded secrets in Docker Compose or application code.
+- Treat load-test screenshots as evidence, but document test parameters and conclusions in text so future readers do not need to infer results from images.
+
 ## Apr 11, 2023
 
 - Set up Trello board.
