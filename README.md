@@ -11,6 +11,36 @@ The Questions and Answers Microservice API repository contains the backend servi
 - Report content and mark questions or answers as helpful
 - Retrieve all questions and answers for a product
 
+## Architecture
+
+The service uses an Express API backed by PostgreSQL, with Redis added as a cache for repeated query results. The original design artifacts include the relational model used for the Q&A data.
+
+![Relational database schema](./docs/assets/relational-database-schema.png)
+
+See [Architecture Notes](./docs/architecture.md) for more details about the data model, Docker setup, and deployment experiments.
+
+## Performance Summary
+
+The engineering journal and captured test artifacts show several rounds of optimization:
+
+- PostgreSQL indexing reduced a captured `/qa/questions` Postman response from about `1888 ms` to about `211 ms`.
+- Redis caching improved repeated-request performance in hosted Loader.io tests.
+- The strongest captured cached Loader.io run handled `10000 clients over 1 min` with `10000` successful responses and about `62 ms` average response time.
+
+Before indexing:
+
+![Postman GET questions before index](./docs/assets/postman-get-questions-before-index-slow.png)
+
+After indexing:
+
+![Postman GET questions after index](./docs/assets/postman-get-questions-after-index-fast.png)
+
+Cached Loader.io result:
+
+![Loader cache test results](./docs/assets/loader-cache-test-4-results.png)
+
+See [Performance Notes](./docs/performance.md) for the fuller artifact-backed performance write-up.
+
 ## Getting Started
 
 ### Prerequisites
